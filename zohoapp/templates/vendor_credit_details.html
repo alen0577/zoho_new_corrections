@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+
+
+<div class="d-flex justify-content-between align-items-center mt-md-5">
+    <div class="d-flex">
+        <form class="form-inline">
+            <label class="mr-2" for="fromdate">From :</label>&nbsp;
+            <input type="date" class="form-control ms-1" id="fromdate" style="color: black !important;">
+            <label class="mx-2" for="todate">To :</label>
+            <input type="date" class="form-control ms-1" id="todate" style="color: black !important;">
+        </form>
+    </div>
+    <div class="d-flex">
+        
+        <button class="btn btn-warning mr-2" id="pdf" onclick="printDiv()">Print</button>&nbsp;
+        <button class="btn btn-warning mr-2" id="pdf" onclick="exportAsPDF()">PDF</button>
+        <div style="width: 3px;"></div>
+        <div class="dropdown">
+            <button class="btn btn-warning mr-2" id="exportbtn" >Export</button>
+           
+            
+            <a href="{% url 'report_inventory_view' %}" class="btn btn-danger" >
+                <i class="fa fa-times-circle"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row col-md-4 mt-5">
+    <div class="search-container">
+        <input type="text" class="search-input form-control text-black" id="vendorSearch" placeholder="Search for vendors...">
+        <div class="custom-dropdown dropdown-menu bg-black" id="vendorDropdown">
+            {% for i in data %}
+            <div class="dropdown-item custom-dropdown-item text-warning"><span class="ms-1">{{i.vendor_name}}</span></div>
+            {% endfor %}
+            
+            <!-- Add more items as needed -->
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <hr>
+
+    <div class="printarea" >
+        <div class="row "> 
+            <div class="col-md-4"></div>
+            <div class="col-md-4">
+                {% if company.company_name %}
+                <h4 class="text-center mt-3">{{company.company_name}}</h4>
+                {% else %}
+                <h4 class="text-center mt-3">Add Company</h4>
+                {% endif %}
+                <h3 class="text-center mt-3">Vendor Credit Details</h3>
+            </div>
+            <div class="col-md-4"></div>
+        </div>
+        <div class="table-responsive mt-5">
+            <table class="table table-hover table-light" id="table">
+                <thead>
+                   <tr>
+                        <th>Date</th>
+                        <th>Vendor Credit No</th>
+                        <th>Vendor Name</th>
+                        <th>Tax</th>
+                        <th>Total Amount</th>
+                   </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>29/09/2023</td>
+                        <td>DUC001</td>
+                        <td>Alen Antony</td>
+                        <td>90</td>
+                        <td>3000</td>
+                    </tr>
+        
+                </tbody>
+            </table>
+        </div>
+        
+    </div>
+    
+</div>
+        
+        
+ 
+
+
+
+
+
+<style>
+    .search-container {
+        position: relative;
+        max-width: 300px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .custom-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+       
+        box-shadow: 0 4px 8px rgba(255, 183, 0, 0.159);
+        border: 1px solid #ccc;
+    }
+
+    .custom-dropdown-item {
+        padding: 10px;
+        cursor: pointer;
+    }
+
+    .custom-dropdown-item:hover {
+        /* background-color: #eeeeee; */
+        color: darkgoldenrod;
+    }
+</style>
+
+<script>
+    const searchInput = document.getElementById('vendorSearch');
+    const customDropdown = document.getElementById('vendorDropdown');
+
+    searchInput.addEventListener('click', function() {
+        customDropdown.style.display = 'block';
+    });
+    
+    searchInput.addEventListener('input', function() {
+        const searchValue = this.value.toLowerCase();
+        const dropdownItems = customDropdown.getElementsByClassName('custom-dropdown-item');
+
+        
+        for (const item of dropdownItems) {
+            const vendorName = item.textContent.toLowerCase();
+            if (vendorName.includes(searchValue)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+
+        customDropdown.style.display = 'block';
+    });
+
+    customDropdown.addEventListener('mouseleave', function() {
+        this.style.display = 'none';
+    });
+
+    // Handle item selection
+    const dropdownItems = customDropdown.getElementsByClassName('custom-dropdown-item');
+    for (const item of dropdownItems) {
+        item.addEventListener('click', function() {
+            searchInput.value = this.textContent;
+            customDropdown.style.display = 'none';
+        });
+    }
+</script>
+
+<script>
+    function printDiv() {
+        var printContents = document.querySelector('.printarea').innerHTML;
+        var originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = printContents;
+
+        window.print();
+
+        document.body.innerHTML = originalContents;
+    }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+
+<script>
+    document.getElementById("exportbtn").addEventListener("click", function () {
+    const Table = document.getElementById("table");
+    const ws = XLSX.utils.table_to_sheet(Table);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    XLSX.writeFile(wb, "table.xlsx");
+    });
+
+</script>
+
+{% endblock %}

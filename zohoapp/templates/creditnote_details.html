@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+
+
+<style>
+  
+    .col {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+
+        .printable-content table {
+            margin: 0 auto;
+        }
+
+        .printable-content,
+        .printable-content * {
+            visibility: visible;
+        }
+
+        .printable-content {
+            width: 200%;
+            max-width: 100%;
+            padding: 60px;
+        }
+
+        .printable-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+        }
+    }
+    @media print {
+        @page {
+            size: landscape;
+        }
+    }
+    @media (max-width: 768px) {
+    
+        #d1,
+        #d2,
+        #search-box {
+            width: 30%;
+        }
+
+
+    }
+
+    .daterangepicker {
+        background-color: #f0f0f0;
+        color: #000;
+    }
+
+   
+</style>
+
+<div class="d-flex justify-content-between align-items-center" style="margin-top: 40px;">
+    <div class="d-flex">
+        <div class="col">
+            <form action="" method="post" id="date-form">
+                {% csrf_token %}
+                From <input type="date" id="d1" name="d1" required>
+                To <input type="date" id="d2" name="d2" required>
+            </form>
+        </div>
+        <!-- <a href="{% url 'customize_report' %}" style="margin-left: 30px;">Customize report <i class="fa fa-cog"></i></a> -->
+    </div>
+   
+    <div class="d-flex">
+     
+        <button class="btn btn-light mr-2" id="print">   <i class="fa fa-print"></i> Print</button>&nbsp;
+        <button class="btn btn-light mr-2" id="pdf1" onclick="exportAsPDF()"><i class="fa fa-file-pdf-o"></i>PDF</button>
+      
+        <div style="width: 3px;"></div>
+        <div class="dropdown">
+            <button class="btn btn-light mr-3 dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+                Export
+            </button>
+            <div class="dropdown-menu" aria-labelledby="exportDropdown">
+             
+                <a class="dropdown-item" href="#" onclick="exportToExcel()">XLS (Excel)</a>
+            </div>
+            <a href="{% url 'reports' %}" class="btn btn-light" style=" color: rgb(1, 1, 1);">
+                <i class="fa fa-times-circle"></i>
+            </a>
+        </div>
+        
+    </div>
+    
+  </div>
+  <div class="input-group input-group-sm ml-auto" style="width: 150px; margin: 10px;margin-left: 800px;">
+      <input type="text" id="search-box" class="form-control" placeholder="Search...">&nbsp;&nbsp;
+      <div class="input-group-sm">
+         
+             
+         
+      </div>
+      
+  </div>
+  <div class="dropdown ml-auto" style=" margin-left: 800px; margin-top:10px;">
+      <button class="btn btn-warning btn-outline-light dropdown-toggle" type="button" id="filterDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="fas fa-filter"></i> 
+      </button>
+      <div class="dropdown-menu" aria-labelledby="filterDropdown">
+          <a class="dropdown-item" href="#" data-category="customerName">Customer type</a>
+          <a class="dropdown-item" href="#" data-category="customerType">Type</a>
+          <a class="dropdown-item" href="#" data-category="date">Date</a>
+          <a class="dropdown-item" href="#" data-category="reference">Reference</a>
+      </div>
+  </div>
+
+<div class="printable-wrapper" id="container-to-print">
+    <div class="printable-content">
+        <center>
+            {% if company.company_name != None %}
+            <a class="text" style="font-size: 1rem; color: white;">{{ company.company_name }}</a><br>
+          {% else %}
+            <a class="text" style="font-size: 1rem; color: white;">Add Company</a><br>
+          {% endif %}
+            <h4 class="text" style="color: white;">CreditNote</h4>
+            <h5 class="text" style="color:white;">Basis:</h5>
+            <p class="text" style="color: white;" id="date-range-display">From <span id="start_date"></span> To <span id="end_date"></span></p>
+            
+        </center>
+        <div id="table-container">
+        <div class="table-responsive"> 
+        <table class="table table-bordered table-striped mt-4">
+            <thead>
+                <tr>
+                    
+                    <th>Date</th>
+                    <th>Creditnote Number</th>
+                    <th>customer name</th>
+                    <th>Email</th>
+                    <th>Balance</th>
+                    <th>Total amount</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for cr in credit %}
+            <tr>
+               
+                
+                <td style="color: white;">{{cr.creditnote_date}}</td>
+                <td style="color: white;">{{cr.invoicenumber}}</td>
+                <td style="color: white;">{{cr.customer.customerName}}</td>
+                <td style="color: white;">{{cr.customer.customerEmail}}</td>
+                <td style="color: white;">{{cr.customer.openingBalance}}</td>
+                <td style="color: white;">{{cr.total}}</td>
+                
+            </tr>
+          
+            </tbody>
+            {% endfor %}
+        </table>
+       
+    </div>
+</div>
+</div>
+</div>
+<div class="printable-content mt-3">
+    
+</div>
+
+<script>
+
+
+function exportAsPDF() {
+     const container = document.getElementById('container-to-print');
+   
+     // Save the original background color
+     const originalBackgroundColor = container.style.backgroundColor;
+   
+     // Set the container's background color to white
+     container.style.backgroundColor = 'white';
+   
+     // Apply styling changes to the container's content
+     const textWhiteElements = container.querySelectorAll('.text');
+     textWhiteElements.forEach(element => {
+       element.style.color = 'black'; // Set text color to black
+     });
+   
+     const tableElements = container.querySelectorAll('table');
+     const tableCells = container.querySelectorAll('td,th');
+     const tableRows = container.querySelectorAll('tr');
+   
+     tableElements.forEach(table => {
+       table.style.backgroundColor = '#ffffff'; // Set background color to white
+       table.style.color = '#000000'; // Set text color to black
+     });
+   
+     tableCells.forEach(cell => {
+       cell.style.backgroundColor = '#ffffff'; // Set background color to white
+       cell.style.color = '#000000'; // Set text color to black
+       cell.style.border = '1px solid black'; // Add a black border
+     });
+   
+     tableRows.forEach(row => {
+       row.style.backgroundColor = '#000000'; // Set background color to black
+     });
+   
+     const pdfOptions = {
+       margin: 0,
+       filename: '{{company_data.company_name}}Creditnote_details.pdf',
+       image: { type: 'jpeg', quality: 0.98 },
+       html2canvas: { scale: 2 },
+       jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+     };
+   
+     // Generate PDF from the container
+     html2pdf().from(container).set(pdfOptions).save().then(() => {
+
+       // Restore the original background color
+       container.style.backgroundColor = originalBackgroundColor;
+
+       textWhiteElements.forEach(element => {
+         element.style.color = 'white'; // Restore original text color
+
+       // Remove the pdf-background class after generating the PDF
+       container.classList.remove('pdf-background');
+       });
+     });
+   }
+
+   // Function to save Excel using XLSX
+   function exportToExcel() {
+       var table = document.querySelector('table');
+       var ws = XLSX.utils.table_to_sheet(table);
+       var wb = XLSX.utils.book_new();
+       XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+       XLSX.writeFile(wb, 'report.xlsx');
+   }
+
+   // Function to handle export based on dropdown selection
+   document.getElementById('exportDropdown').addEventListener('change', function () {
+       var selectedValue = this.value;
+       if (selectedValue === 'pdf') {
+           exportToPDF();
+       } else if (selectedValue === 'xls') {
+           exportToExcel();
+       }
+   });
+   const pdfExportLink = document.getElementById('pdf1'); // This should be the link for PDF export
+pdfExportLink.addEventListener('click', function (event) {
+   event.preventDefault(); // Prevent the link from navigating
+   exportToPDF();
+});
+
+function adjustTableForPrint() {
+     
+     const table = document.querySelector('.printable-content table');
+     const container = document.querySelector('.printable-content');
+
+    
+     const scaleFactor = container.offsetWidth / table.offsetWidth;
+    
+     
+     table.style.transform = `scale(${scaleFactor})`;
+     table.style.transformOrigin = 'top left';
+
+     
+     const marginTop = (container.offsetHeight - table.offsetHeight * scaleFactor) / 2;
+     table.style.marginTop = `${marginTop}px`;
+ }
+
+ //  "Print" button
+ const printButton = document.getElementById('print');
+ printButton.addEventListener('click', function() {
+     adjustTableForPrint();
+     window.print();
+ });
+
+
+
+   const d1 = document.getElementById('d1');
+    const d2 = document.getElementById('d2');
+    const start_date = document.getElementById('start_date');
+    const end_date = document.getElementById('end_date');
+
+    d1.addEventListener('change', updateDateDisplay);
+    d2.addEventListener('change', updateDateDisplay);
+
+    function updateDateDisplay() {
+        start_date.textContent = d1.value;
+        end_date.textContent = d2.value;
+    }
+//search
+$(document).ready(function () {
+        $("#search-box").on("keyup", function () {
+            var searchText = $(this).val().toLowerCase();
+
+            $("#table-container table tbody tr").each(function () {
+                var row = $(this);
+                var date = row.find("td:eq(0)").text().toLowerCase();
+                var creditnoteNumber = row.find("td:eq(1)").text().toLowerCase();
+                var customerName = row.find("td:eq(2)").text().toLowerCase();
+                var email = row.find("td:eq(3)").text().toLowerCase();
+                var balance = row.find("td:eq(4)").text().toLowerCase();
+                var totalAmount = row.find("td:eq(5)").text().toLowerCase();
+
+                if (
+                    date.includes(searchText) ||
+                    creditnoteNumber.includes(searchText) ||
+                    customerName.includes(searchText) ||
+                    email.includes(searchText) ||
+                    balance.includes(searchText) ||
+                    totalAmount.includes(searchText)
+                ) {
+                    row.show();
+                } else {
+                    row.hide();
+                }
+            });
+        });
+    });
+  //filter
+
+  $(".filter-button").click(function () {
+    var filterCategory = $(this).data("category");
+
+    $("#filterDropdown").html("Filter by " + filterCategory);
+
+    // Get the filter value (e.g., customer name or creditnote number)
+    var filterValue = prompt("Enter " + filterCategory + " to filter:");
+
+    // Show all rows initially
+    $("#table-container table tbody tr").hide();
+
+    if (filterCategory === "customerName" || filterCategory === "creditnoteNumber") {
+        // Filter the rows based on the selected category and filter value
+        $("#table-container table tbody tr").each(function () {
+            var row = $(this);
+            var columnText = row.find("td:eq(2)").text(); // Change the index to match the desired column
+
+            if (filterCategory === "creditnoteNumber") {
+                columnText = row.find("td:eq(1)").text();
+            }
+
+            // Perform case-insensitive matching
+            if (columnText.toLowerCase().includes(filterValue.toLowerCase())) {
+                row.show();
+            }
+        });
+    }
+});
+
+    
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+{%endblock%}

@@ -1,0 +1,463 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+{% load tz %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<!-- <link rel="stylesheet" href="{% static 'assets/css/style.css' %}"> -->
+
+
+<style>
+  .modal{
+    z-index: 9999;
+    overflow: scroll;
+  }
+    input[type=text], select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+    
+    label {
+      padding: 12px 12px 12px 0;
+      display: inline-block;
+    }
+    
+    
+    .row:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+    
+    @media screen and (max-width: 600px) {
+      .col-25, .col-75, input[type=submit] {
+        width: 100%;
+        margin-top: 0;
+      }
+      input[type=text], select, textarea {
+      width: 100%;
+
+    }
+    }
+
+    .dropdown input,
+    .dropdown button {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+    }
+
+    .dropdown.open input,
+    .dropdown.open button {
+      display: block;
+    }
+
+    .row a{
+      color: rgb(218, 164, 48);
+      font-size: 12px;
+    }
+
+    .table th a{
+      color:rgb(218, 164, 48);
+      font-size: 11px;
+      margin-left: 100px;
+    }
+
+
+    ::-webkit-scrollbar {
+      width: 5px; 
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1; 
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #888; 
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555; 
+    }
+    .modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+  }
+ 
+   
+
+    </style>
+
+
+<div class="container-fluid containerprof">
+    <div class="card radius-15" style="width: 100%;">
+        <div class="card-body">
+            <div class="card-title">
+                <h2 class="mb-0 text-uppercase text-right">Edit Credit Note</h2>
+            </div>
+        </div>
+    </div>
+    <div>
+        <div class="card radius-15 p-5">
+            <form action="{% url 'editdb' pk=creditnote.pk %}" class="mt-2 mb-4" method="post"
+                enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Customer Name *</label>
+                    </div>
+                    <div class="col-md-6">
+                        <select name="customer" id="customer_sel" class="form-control bg-light text-dark">
+                            <option value="{{ creditnote.customer.customer_id }}">
+                                {{ creditnote.customer.customerName }}
+                            </option>
+                            {% for customer_obj in cust %}
+                            <option value="{{ customer_obj.customer_id }}"
+                                {% if customer_obj.customer_id == creditnote.customer_id %} selected {% endif %}>
+                                {{ customer_obj.customerName }}</option>
+                            {% endfor %}
+                        </select>
+                        <a href="" data-toggle="modal" data-target="#newcustomer">+ Add New Customer</a>
+                    </div>
+                </div>
+                <div class="row mt-2" id="email_row" style="display:none;">
+                    
+                </div>
+
+                <div class="row mt-2" id="pos_row" style="display:none;">
+                   
+                </div>
+
+                <div class="row mt-2" id="gst_row" style="display:none;">
+                    
+                </div>
+
+                <div class="row mt-2" id="billing_address_row" style="display:none;">
+                    <div class="col-md-3">
+                        <label for="billing_address">Billing Address</label>
+                    </div>
+                    <div class="col-md-6">
+                        <textarea class="form-control bg-light text-dark" id="billing_address_input"
+                            name="billing_address" rows="2" style="height: 100px;" disabled></textarea>
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <label for="prof_name">Invoice Number</label>
+                    </div>
+
+                    <div class="col-md-6">
+                        <input type="text" value="{{ creditnote.invoice_number }}"
+                            class="form-control bg-light text-dark" id="prof_name" name="sale_no">
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <label>Credit Note*</label>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" value="{{ creditnote.credit_note }}"
+                            class="form-control bg-light text-dark" id="credit_note" name="credit_note">
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <label for="prof_name">Reference</label>
+                    </div>
+
+                    <div class="col-md-6">
+                        <input type="text" value="{{ creditnote.reference }}"
+                            class="form-control bg-light text-dark" id="ref" name="ord_no">
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <label for="date1">Creditnote Date</label>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="date" value="{{ creditnote.creditnote_date|date:'Y-m-d' }}"
+                            class="form-control bg-light text-dark" id="date1" name="cr_date">
+                    </div>
+                </div>
+          
+
+                           <!-- Rest of your form code -->
+
+                           <div class="row mt-2">
+                            <div class="col-md-12 table-responsive-md mt-3">
+                                <table class="table table-bordered" id="item_table" onclick='toggleDateInput()'>
+                                    <thead>
+                                        <tr>
+                                            <th>Item<br><a href="" data-toggle="modal" data-target="#newitem"
+                                                    class="text-capitalize">+ Item</a></th>
+                                            <th class="text-right">HSN</th>
+                                            <th class="text-right">Quantity</th>
+                                            <th class="text-right">Rate</th>
+                                            <th class="text-right">Tax</th>
+                                            <th class="text-right">Discount</th>
+                                            <th class="text-right">Amount</th>
+                                            <th colspan="2"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for creditnote in credititems %}
+                                        <tr id="row1">
+                                            <td style="width: 10%;">
+                                                <div> <select class='form-control bg-light text-dark border-0 item_select itm'
+                                                        name='item_name[]'>
+                                                        <option value="" disabled>Select Item</option>
+                                                        {% for i in itm %}
+                                                        <option value="{{ i.Name }}"
+                                                            {% if i.Name == credititem.item_name %} selected {% endif %}>
+                                                            {{ i.Name }}</option>
+                                                        {% endfor %}
+                                                    </select></div>
+                                            </td>
+                                            <td style="width: 13%;" class='text-right'><input type='number' id='hsn1'
+                                                    class=' text-right qty form-control bg-light text-dark' name='hsn'
+                                                    value="{{ creditnote.hsn }}">
+                                            </td>
+                                            <td style="width: 15%;" class='text-right'><input type='number' id='qty1'
+                                                    class=' text-right rate form-control bg-light text-dark' name='quantity[]'
+                                                    value="{{creditnote.quantity}}">
+                                            </td>
+                                            <td style="width: 12%;" class='text-right text-dark'><input type='number' id='rate1'
+                                                    class=' text-right discount bg-light text-dark form-control' name='rate[]'
+                                                    value='{{creditnote.rate}}'>
+                                            </td>
+                                            <td style="width: 15%;" class='text-right '> 
+                                                <select name='tax[]' class='form-control bg-light text-dark  text-right border-0 tax' onclick="toggleTaxField(this)">
+                                                    <option class="text-dark">{{creditnote.tax}}</option>
+                                                    <option value="0" class="text-dark">0% GST</option>
+                                                    <option value="3" class="text-dark">3% GST</option>
+                                                    <option value="5" class="text-dark">5% GST</option>
+                                                    <option value="12" class="text-dark">12% GST</option>
+                                                    <option value="18" class="text-dark">18% GST</option>
+                                                    <option value="28" class="text-dark">28% GST</option>
+                                                </select>
+                                            </td>
+                                            <td style="width: 15%;" class='text-right'><input type='number' id='discount'
+                                                    class=' text-right form-control amount bg-light text-dark' name='discount[]'
+                                                    value='{{creditnote.discount}}'></td>
+                                            <td style="width: 15%;" class='text-right'><input type='number' id='amount1'
+                                                    class=' text-right form-control amount bg-light text-dark' name='amount[]'
+                                                    value='{{creditnote.amount}}'></td>
+                                            <td class='text-center'><button type='button' id='del_btn1'
+                                                    class='btn btn-transparent text-danger btn-sm btn-outline-danger rounded-circle delete-row'
+                                                    style='width:30px'>X</button></td>
+                                            <td class='text-center'>
+                                                <button type='button'
+                                                    class='btn btn-transparent text-primary btn-sm btn-outline-primary rounded-circle clone-row'
+                                                    data-row=1 style='width:30px'><i class="fa fa-clone"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    </table>
+                                </div>
+                                    
+                        <div class="row border-bottom pb-5">
+                            <div class="col-sm-5 d-flex flex-column mt-auto">
+                                <label for="">Customer Notes</label>
+                                <textarea name="customer_note" id="" cols="8" rows="8"
+                                    placeholder=" Will be Displayed on the Purchase Order">{{ creditnote.customer_notes }}</textarea>
+                            </div>
+                            <div class="col-sm-6 mt-4">
+                                <table class=" table  text-white" style="background-color: rgba(58, 57, 57, 0.8);">
+                                    <tr>
+                                        <td>Sub Total</td>
+                                        <td></td>
+                                        <td><input type="number" id="subtotal" name="subtotal" step="any"
+                                                class="bg-transparent border-0 text-right subtotal text-white"
+                                                value="{{ creditnote.subtotal }}"></td>
+                                    </tr>
+                                    <tr style="display: none;" id="tr_igst">
+                                        <td>IGST</td>
+                                        <td></td>
+                                        <td><input type="number" id='igst' name="igst" step="any"
+                                                value="{{ creditnote.igst }}"
+                                                class="form-control bg-transparent border-0 text-right igst  text-white"></td>
+                                    </tr>
+                                    <tr style="display: none;" id="tr_cgst">
+                                        <td>CGST</td>
+                                        <td></td>
+                                        <td><input type="number" value="{{ creditnote.cgst }}" id='cgst' name="cgst"
+                                                step="any" 
+                                                class="form-control bg-transparent border-0 text-right cgst text-white">
+                                        </td>
+                                    </tr>
+                                    <tr style="display: none;" id="tr_sgst">
+                                        <td>SGST</td>
+                                        <td></td>
+                                        <td><input value="{{ creditnote.sgst }}" type="number" id='sgst' name="sgst"
+                                                step="any" 
+                                                class="form-control bg-transparent border-0 text-right sgst  text-white">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tax Total</td>
+                                        <td></td>
+                                        <td><input type="number" id="tax_total" name="tax_total" step="any"
+                                                value="{{ creditnote.total_tax }}"
+                                                class="form-control bg-transparent border-0 text-right tax_total text-white">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Shipping Charges</td>
+                                        <td><input type="hidden" id="shipping_charge" step="any"
+                                                value="{{ creditnote.shipping_charge }}"
+                                                class="form-control bg-transparent border-0 text-right shipping_charge  ">
+                                        </td>
+                                        <td><input type="number" class="form-control  bg-transparent border-0  text-light"
+                                                id="shipping" value="{{ creditnote.shipping_charge }}"
+                                                name="shipping_charge"> </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Adjustment</td>
+                                        <td></td>
+                                        <td><input type="number" id="adjustment" name="adjustment" step="any"
+                                                value="{{ creditnote.adjustment }}"
+                                                class="form-control bg-transparent border-0 text-right adjustment"></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td> </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total ( &#x20B9; )</th>
+                                        <th></th>
+                                        <th><input type="number" id="grandtotal" name="t_total" step="any"
+                                                value="{{ creditnote.total }}"
+                                                class="form-control bg-transparent border-0 text-right grandtotal  text-white">
+                                        </th>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+        
+                        <div class="row py-5 border-bottom">
+                            <div class="col-md-8 d-flex flex-column w-60 text-white">
+                                <label for="">Terms & Conditions</label>
+                                <textarea name="ter_cond" id="" cols="20" rows="5"
+                                    placeholder=" Enter the terms & conditions of your business to be displayed in your transaction.">{{ creditnote.terms_and_conditions }}</textarea>
+                            </div>
+                            <div class="col-md-4 py-5 text-center rounded" style="background-color: rgba(32, 35, 37);">
+                                <label class="text-white" for="">Attach File(s) to Purchase</label><br>
+        
+                                <input id="file-upload" class="form-control bg-light text-dark" type="file" name="file">
+                            </div>
+                        </div>
+                        <div class="row mt-5 mb-3 m-5 ">
+                            <input style="width: 150px;margin-right: 2rem;" type="submit" class="btn btn-success mt-2"
+                                value="Save">
+                                <a href="" class="btn btn-danger mt-2" style="width: 150px;">Cancel</a>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script>
+            // Function to show/hide the tax field in a specific row
+            function toggleTaxField(selectElement) {
+                const selectedOption = selectElement.value;
+                const taxField = selectElement.parentElement.parentElement.querySelector('.tax-field');
+        
+                // Check the customer's tax status (GST or IGST)
+                const customerTaxStatus = document.getElementById('customer_sel').value;
+        
+                // Update tax options based on customer's tax status
+                if (customerTaxStatus === "GST") {
+                    // Show GST tax options
+                    taxField.innerHTML = `
+                        <option value="0" class="text-dark">0% GST</option>
+                        <option value="3" class="text-dark">3% GST</option>
+                        <option value="5" class="text-dark">5% GST</option>
+                        <option value="12" class="text-dark">12% GST</option>
+                        <option value="18" class="text-dark">18% GST</option>
+                        <option value="28" class="text-dark">28% GST</option>
+                    `;
+                } else if (customerTaxStatus === "IGST") {
+                    // Show IGST tax options
+                    taxField.innerHTML = `
+                        <option value="0" class="text-dark">0% IGST</option>
+                        <option value="3" class="text-dark">3% IGST</option>
+                        <option value="5" class="text-dark">5% IGST</option>
+                        <!-- Add IGST percentage options here -->
+                    `;
+                }
+        
+                if (selectedOption === "0") {
+                    // If the selected option is 0%, hide the tax field
+                    taxField.style.display = "none";
+                } else {
+                    taxField.style.display = "block";
+                }
+            }
+        
+            // Add event listener to the customer select element
+            const customerSelect = document.getElementById('customer_sel');
+            customerSelect.addEventListener("change", function () {
+                // Call the function to update tax options when the customer changes
+                const taxSelectElements = document.querySelectorAll('.tax');
+                taxSelectElements.forEach(function (element) {
+                    toggleTaxField(element);
+                });
+            });
+        
+            // Call the function initially to set the initial state for all rows
+            const taxSelectElements = document.querySelectorAll('.tax');
+            taxSelectElements.forEach(function (element) {
+                toggleTaxField(element);
+            });
+        </script>
+        
+        <!-- Include the JavaScript code you provided for populating customer details based on selection -->
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                // Change event listener for the customer dropdown
+                $('#customer_sel').change(function () {
+                    var selectedCustomer = $('#customer_sel option:selected');
+                    var email = selectedCustomer.data('email');
+                    var placeOfSupply = selectedCustomer.data('pos');
+                    var gstTreatment = selectedCustomer.data('gst');
+                    var billingAddress = selectedCustomer.data('billing_address');
+        
+                    // Content of the placeholders
+                    $('#email_input').val(email);
+                    $('#pos_input').val(placeOfSupply);
+                    $('#gst_input').val(gstTreatment);
+                    $('#billing_address_input').val(billingAddress);
+        
+                    // Show or hide fields based on selection
+                    if (selectedCustomer.val() !== '') {
+                        $('#email_row').show();
+                        $('#pos_row').show();
+                        $('#gst_row').show();
+                        $('#billing_address_row').show();
+                    } else {
+                        $('#email_row').hide();
+                        $('#pos_row').hide();
+                        $('#gst_row').hide();
+                        $('#billing_address_row').hide();
+                    }
+                });
+            });
+        </script>
+
+
+
+{% endblock %}
